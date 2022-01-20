@@ -262,7 +262,8 @@ ifneq (,$(findstring mlkit,$(MAKECMDGOALS)))
 mlkit-mlton: $(MLTON_OUTPUT)-mlkit
 
 $(MLTON_OUTPUT)-mlkit: $(shell $(MLBDEPS) mlton-mlkit.mlb | $(GREP) -v '$$(SML_LIB)') $(MLTON_GEN_SOURCES)
-	$(MLKIT) -o $@ mlton-mlkit.mlb
+	$(MLKIT) -no_gc -o $@ -j 8 mlton-mlkit-mael.mlb
+#	$(MLKIT) -o $@ -Pcee -print_rho_types mlton-mlkit.mlb
 
 mlton-mlkit.mlb: ../lib/stubs/mlkit/basis/sources.mlb ../lib/stubs/mlkit/mlton/sources.mlb $(shell $(MLBDEPS) ../lib/stubs/mlton-stubs/sources.mlb | $(GREP) 'mlb$$' | $(GREP) -v '$$(SML_LIB)') $(shell $(MLBDEPS) mlton.mlb | $(GREP) 'mlb$$' | $(GREP) -v '$$(SML_LIB)')
 	(									\
@@ -285,3 +286,8 @@ mlton-mlkit.mlb: ../lib/stubs/mlkit/basis/sources.mlb ../lib/stubs/mlkit/mlton/s
 		echo 'end';							\
 	) > $@
 endif
+
+.PHONY: clean-mael
+clean-mael:
+	$(MAKE) clean
+	find .. -name 'MLB' | xargs rm -rf
