@@ -261,9 +261,17 @@ ifneq (,$(findstring mlkit,$(MAKECMDGOALS)))
 .PHONY: mlkit-mlton
 mlkit-mlton: $(MLTON_OUTPUT)-mlkit
 
+MLKIT_ROOT ?= ~/gits/bitstealing/boot/bootstrap0/mlkit-v3
+MLKIT_COMP_LOG ?= mlton-mlkit-comp.log
+MLKIT_FLAGS ?= -heap_to_live_ratio 5 --report_boxities
+
 $(MLTON_OUTPUT)-mlkit: $(shell $(MLBDEPS) mlton-mlkit.mlb | $(GREP) -v '$$(SML_LIB)') $(MLTON_GEN_SOURCES)
-	$(MLKIT) -no_gc -o $@ -j 8 mlton-mlkit-mael.mlb
-#	$(MLKIT) -o $@ -Pcee -print_rho_types mlton-mlkit.mlb
+	echo '** COMPILING MLTON WITH MLKIT **' > $(MLKIT_COMP_LOG)
+	echo "** MLKIT_ROOT: $(MLKIT_ROOT)" >> $(MLKIT_COMP_LOG)
+	echo "** MLKIT_FLAGS: $(MLKIT_FLAGS)" >> $(MLKIT_COMP_LOG)
+	SML_LIB=$(MLKIT_ROOT) /usr/bin/time -l $(MLKIT_ROOT)/bin/mlkit $(MLKIT_FLAGS) -o $@ mlton-mlkit-mael.mlb 2>&1 | tee -a $(MLKIT_COMP_LOG)
+#	$(MLKIT) -o $@ -print_effects -print_types mlton-mlkit-mael.mlb
+#	$(MLKIT) -no_gc -o $@ -j 8 mlton-mlkit-mael.mlb
 
 mlton-mlkit.mlb: ../lib/stubs/mlkit/basis/sources.mlb ../lib/stubs/mlkit/mlton/sources.mlb $(shell $(MLBDEPS) ../lib/stubs/mlton-stubs/sources.mlb | $(GREP) 'mlb$$' | $(GREP) -v '$$(SML_LIB)') $(shell $(MLBDEPS) mlton.mlb | $(GREP) 'mlb$$' | $(GREP) -v '$$(SML_LIB)')
 	(									\

@@ -32,13 +32,13 @@ struct
   structure amd64EntryTransfer
     = amd64EntryTransfer (structure amd64 = amd64)
 
-  structure amd64MLton 
+  structure amd64MLton
     = amd64MLton (structure amd64MLtonBasic = amd64MLtonBasic
                 structure amd64Liveness = amd64Liveness)
 
   val implementsPrim = amd64MLton.implementsPrim
 
-  structure amd64Translate 
+  structure amd64Translate
     = amd64Translate (structure amd64 = amd64
                     structure amd64MLton = amd64MLton
                     structure amd64Liveness = amd64Liveness)
@@ -106,7 +106,7 @@ struct
                          Int.max (max, tempsMax t))
                      val m = m + 1
                   in
-                     print (concat ["PRIVATE ", CType.toString t, 
+                     print (concat ["PRIVATE ", CType.toString t,
                                     " local", CType.toString t,
                                     "[", Int.toString m, "];\n"])
                   end)
@@ -120,7 +120,7 @@ struct
                program = program,
                rest = rest}
               ; done ()
-            end 
+            end
 
         val outputC = Control.trace (Control.Pass, "outputC") outputC
 
@@ -142,7 +142,7 @@ struct
               val asm =
                  [
                   amd64.Assembly.pseudoop_text (),
-                  amd64.Assembly.pseudoop_p2align 
+                  amd64.Assembly.pseudoop_p2align
                   (amd64.Immediate.int 4, NONE, NONE),
                   amd64.Assembly.pseudoop_global jumpToSML,
                   amd64.Assembly.pseudoop_hidden jumpToSML,
@@ -217,7 +217,7 @@ struct
                   {src = (amd64.Operand.address o amd64.Address.T)
                          {disp = (SOME o amd64.Immediate.labelPlusInt)
                                  (amd64MLton.gcState_label,
-                                  Bytes.toInt 
+                                  Bytes.toInt
                                   (Machine.Runtime.GCField.offset
                                    Machine.Runtime.GCField.StackTop)),
                           base = SOME amd64.Register.rip, index = NONE, scale = NONE},
@@ -227,18 +227,18 @@ struct
                   {src = (amd64.Operand.address o amd64.Address.T)
                          {disp = (SOME o amd64.Immediate.labelPlusInt)
                                  (amd64MLton.gcState_label,
-                                  Bytes.toInt 
+                                  Bytes.toInt
                                   (Machine.Runtime.GCField.offset
                                    Machine.Runtime.GCField.Frontier)),
                           base = SOME amd64.Register.rip, index = NONE, scale = NONE},
                    dst = amd64.Operand.register frontierReg,
                    size = amd64.Size.QUAD},
                   amd64.Assembly.instruction_jmp
-                  {target = amd64.Operand.register 
-                            (if win64 then amd64.Register.rcx 
+                  {target = amd64.Operand.register
+                            (if win64 then amd64.Register.rcx
                                       else amd64.Register.rdi),
                    absolute = true},
-                  amd64.Assembly.pseudoop_p2align 
+                  amd64.Assembly.pseudoop_p2align
                   (amd64.Immediate.int 4, NONE, NONE),
                   amd64.Assembly.pseudoop_global returnToC,
                   amd64.Assembly.pseudoop_hidden returnToC,
@@ -324,21 +324,21 @@ struct
         fun outputChunk (chunk as Machine.Chunk.T {blocks, chunkLabel, ...},
                          print)
           = let
-              val isMain 
+              val isMain
                 = Machine.ChunkLabel.equals(#chunkLabel main, chunkLabel)
 
-              val () 
+              val ()
                 = if isMain
                      then outputJumpToSML print
                      else ()
 
               val {chunk}
-                = amd64Translate.translateChunk 
+                = amd64Translate.translateChunk
                   {chunk = chunk,
                    liveInfo = liveInfo}
 
               val chunk : amd64.Chunk.t
-                = amd64Simplify.simplify 
+                = amd64Simplify.simplify
                   {chunk = chunk,
                    (* don't perform optimizations on
                     * the main function (initGlobals)
@@ -358,7 +358,7 @@ struct
                     reserveRsp = reserveRsp})
 
               val allocated_assembly : Assembly.t list list
-                = amd64AllocateRegisters.allocateRegisters 
+                = amd64AllocateRegisters.allocateRegisters
                   {assembly = unallocated_assembly,
                    (* don't calculate liveness info
                     * on the main function (initGlobals)
@@ -388,7 +388,7 @@ struct
               fun loop chunks
                 = let
                     val {print, done, ...} = makeS()
-                    fun loop' (chunks, size) 
+                    fun loop' (chunks, size)
                       = case chunks
                           of [] => done ()
                            | chunk::chunks
@@ -396,12 +396,12 @@ struct
                                     of NONE => false
                                      | SOME maxSize => size > maxSize)
                                 then (done (); loop (chunk::chunks))
-                                else loop'(chunks, 
+                                else loop'(chunks,
                                            size + outputChunk (chunk, print))
-                  in 
+                  in
                     loop' (chunks, 0)
                   end
-            in 
+            in
               loop chunks
               ; amd64Translate.translateChunk_totals ()
               ; amd64Simplify.simplify_totals ()
@@ -414,5 +414,5 @@ struct
       in
         outputAssembly()
         ; outputC()
-      end 
+      end
 end
